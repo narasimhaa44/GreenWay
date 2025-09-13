@@ -298,9 +298,9 @@ body {
   }
 
   .right {
-    width: 30%;
+    width: 100%;
     height: auto;
-    margin: 20px auto;
+    margin: 20px;
   }
 
   .left2 {
