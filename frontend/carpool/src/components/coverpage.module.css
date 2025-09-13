@@ -285,7 +285,11 @@ body {
     padding: 20px;
     margin-bottom: 50px;
   }
+.inner{
+width:200px;
+  height:400px;
 
+}
   .buttons {
     width: 120px;
     height: 40px;
@@ -316,8 +320,8 @@ body {
   }
 
   .side {
-    width: 100px;
-    height: 100px;
+    width: 0px;
+    height: 0px;
   }
 
   .inner1 {
