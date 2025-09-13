@@ -71,7 +71,7 @@ const Contact = () => {
             aria-label="Bootstrap"
           >
             {" "}
-            <img src="../public/logo.png" alt="logo" className={styles.logo} />
+            <img src="/logo.png" alt="logo" className={styles.logo} />
             <p class="col-md-4 mb-0 text-body-secondary">
               © 2025 Company, Inc
             </p>{" "}
