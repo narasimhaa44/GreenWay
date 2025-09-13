@@ -131,10 +131,6 @@ useEffect(() => {
           className: styles.animatedLine,
         }).addTo(mapRef.current);
 
-        const bounds = L.latLngBounds([pickupCoords, dropCoords]);
-        mapRef.current.fitBounds(bounds, { padding: [50, 50] });
-      
-
       // Now fetch riders and add markers
       const res = await axios.post(
         "https://greenwayb.onrender.com/nearby-riders",
@@ -162,6 +158,9 @@ useEffect(() => {
             }),
           }).addTo(mapRef.current).bindPopup(rider.name);
       });
+
+        const bounds = L.latLngBounds([pickupCoords, dropCoords]);
+        mapRef.current.fitBounds(bounds, { padding: [50, 50] });
     }
   }
   };
