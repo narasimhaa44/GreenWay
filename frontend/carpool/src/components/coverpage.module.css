@@ -279,28 +279,56 @@ body {
   }
 }
 
-@media (max-width: 320px) {
-  header {
-    margin-left: 200px;
-    display: flex;
-    flex-direction: row;
-    justify-content: flex-start;
-  }
-  ul {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-  }
-  .left1{
-    width:0px;
-  height:0px;
-}
-
-  .connect {
-    width: auto;
+@media (max-width: 375px) {
+  .mainmatter {
+    font-size: 2rem;
+    padding: 20px;
+    margin-bottom: 50px;
   }
 
-  .logo {
+  .buttons {
     width: 120px;
+    height: 40px;
+    font-size: 16px;
+  }
+
+  .middle {
+    gap: 30px;
+    margin-top: 150px;
+  }
+
+  .right {
+    width: 90%;
+    height: auto;
+    margin: 20px auto;
+  }
+
+  .left2 {
+    width: 90%;
+    height: auto;
+    margin-left: auto;
+    margin-top: 20px;
+  }
+
+  .dia {
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .side {
+    width: 100px;
+    height: 100px;
+  }
+
+  .inner1 {
+    margin-left: 10px;
+    margin-top: 20px;
+    gap: 20px;
+  }
+
+  .inner2 p {
+    font-size: 16px;
+    width: auto;
+    margin-left: 20px;
   }
 }
