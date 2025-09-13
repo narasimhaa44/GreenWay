@@ -10,6 +10,7 @@ const Finder = require("./models/Find.js");
 const bcrypt = require('bcrypt');
 const jwt = require("jsonwebtoken");
 const nodemailer = require("nodemailer");
+const fetch = require("node-fetch");
 
 const app = express();
 app.use(express.json());
