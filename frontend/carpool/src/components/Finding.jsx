@@ -73,7 +73,7 @@ useEffect(() => {
     if (pickupCoords && dropCoords && mapContainerRef.current) {
       // Initialize map if not already initialized
       if (!mapRef.current) {
-        mapRef.current = L.map(mapContainerRef.current).setView(pickupCoords, 10);
+        mapRef.current = L.map(mapContainerRef.current).setView(pickupCoords, 5);
 
         L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
           attribution: "GreenWay",
