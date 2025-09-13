@@ -67,16 +67,19 @@ useEffect(() => {
   const loadNearbyRiders = async () => {
     if (pickupCoords && dropCoords) {
       try {
-        const res = await fetch("https://greenwayb.onrender.com/nearby-riders", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
+        const res = await axios.post(
+          "https://greenwayb.onrender.com/nearby-riders",
+          {
             userLocation: { lat: pickupCoords[0], lng: pickupCoords[1] },
             userDropLocation: { lat: dropCoords[0], lng: dropCoords[1] },
             radius: 3,
-          }),
-        });
-        const riders = await res.json();
+          },
+          {
+            headers: { "Content-Type": "application/json" }
+          }
+        );
+
+        const riders = res.data;
         console.log("Fetched riders:", riders);
         setNearbyRiders(riders);
 
@@ -96,6 +99,10 @@ useEffect(() => {
       }
     }
   };
+
+  loadNearbyRiders();
+}, [pickupCoords, dropCoords]);
+
 
     if (pickupCoords && dropCoords && mapContainerRef.current && !mapRef.current) {
       mapRef.current = L.map(mapContainerRef.current).setView(pickupCoords, 10);
