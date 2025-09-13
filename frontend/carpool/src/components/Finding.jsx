@@ -88,7 +88,7 @@ useEffect(() => {
         }).addTo(mapRef.current).bindPopup("Pickup Point");
 
         L.circle(pickupCoords, {
-          radius: 1000,
+          radius: 800,
           color: "#c96363ff",
           weight: 3,
           fillColor: "#f70000ff",
@@ -133,7 +133,7 @@ useEffect(() => {
 
         const bounds = L.latLngBounds([pickupCoords, dropCoords]);
         mapRef.current.fitBounds(bounds, { padding: [50, 50] });
-      }
+      
 
       // Now fetch riders and add markers
       const res = await axios.post(
@@ -160,13 +160,11 @@ useEffect(() => {
               iconSize: [90, 90],
               iconAnchor: [30, 90],
             }),
-          })
-            .addTo(mapRef.current)
-            .bindPopup(rider.name);
+          }).addTo(mapRef.current).bindPopup(rider.name);
       });
     }
+  }
   };
-
   initializeMapAndLoadData();
 
   return () => {
