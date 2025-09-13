@@ -40,7 +40,7 @@ const FindR = () => {
       localStorage.setItem("userEmail", emailFromUrl);
     } else {
       axios
-        .get("http://localhost:5000/me", { withCredentials: true })
+        .get("https://greenwayb.onrender.com/me", { withCredentials: true })
         .then((res) => {
           if (res.data.email) {
             localStorage.setItem("userEmail", res.data.email);
