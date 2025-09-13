@@ -19,7 +19,7 @@ const Finding = () => {
 
   const handleBooking=async(rider)=>{
     try{
-      const res=await axios.post("http://localhost:5000/booking",{
+      const res=await axios.post("https://greenwayb.onrender.com/booking",{
         userEmail:email,
         riderEmail:rider.email,
         pickup,
@@ -65,7 +65,7 @@ const Finding = () => {
 
   useEffect(() => {
     const fetchNearbyRiders = async (pickupCoords) => {
-      const res = await fetch("http://localhost:5000/nearby-riders", {
+      const res = await fetch("https://greenwayb.onrender.com/nearby-riders", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
