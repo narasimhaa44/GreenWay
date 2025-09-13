@@ -87,7 +87,7 @@ const FindR = () => {
     try {
       const email = localStorage.getItem("userEmail"); // ⬅️ stored earlier
 
-      const response = await axios.post("http://localhost:5000/update", {
+      const response = await axios.post("https://greenwayb.onrender.com/update", {
         pickup,
         drop,
         journeyDate, // ⬅️ send date also
