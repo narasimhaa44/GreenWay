@@ -288,9 +288,19 @@ app.post("/nearby-riders", async (req, res) => {
       const pickupCoords = await geocode(finder.pickup);
       const dropCoords = await geocode(finder.drop);
 
+      if (!pickupCoords) console.warn(`⚠️ Geocoding failed for pickup: "${finder.pickup}"`);
+      if (!dropCoords) console.warn(`⚠️ Geocoding failed for drop: "${finder.drop}"`);
+
+      // Only calculate distances if both coordinates exist
       if (pickupCoords && dropCoords) {
-        const pickupDistance = haversineDistance({ lat: userLocation.lat, lng: userLocation.lng }, { lat: pickupCoords[0], lng: pickupCoords[1] });
-        const dropDistance = haversineDistance({ lat: userDropLocation.lat, lng: userDropLocation.lng }, { lat: dropCoords[0], lng: dropCoords[1] });
+        const pickupDistance = haversineDistance(
+          { lat: userLocation.lat, lng: userLocation.lng },
+          { lat: pickupCoords[0], lng: pickupCoords[1] }
+        );
+        const dropDistance = haversineDistance(
+          { lat: userDropLocation.lat, lng: userDropLocation.lng },
+          { lat: dropCoords[0], lng: dropCoords[1] }
+        );
 
         if (pickupDistance <= radius && dropDistance <= radius) {
           nearbyRiders.push({
@@ -310,14 +320,35 @@ app.post("/nearby-riders", async (req, res) => {
             email: finder.email,
           });
         }
+      } else {
+        // Optional: still return rider but mark as unlocatable
+        nearbyRiders.push({
+          id: finder._id,
+          name: finder.name,
+          picture: finder.picture,
+          pickupLat: pickupCoords ? pickupCoords[0] : null,
+          pickupLng: pickupCoords ? pickupCoords[1] : null,
+          dropLat: dropCoords ? dropCoords[0] : null,
+          dropLng: dropCoords ? dropCoords[1] : null,
+          pickup: finder.pickup,
+          drop: finder.drop,
+          carModel: finder.carModel,
+          seats: finder.seatsAvailable,
+          carnumber: finder.carNumber,
+          price: finder.price,
+          email: finder.email,
+          geocodeFailed: true,
+        });
       }
     }
 
     res.json(nearbyRiders);
-  } catch {
+  } catch (err) {
+    console.error("❌ Error in /nearby-riders:", err);
     res.status(500).json({ message: "Failed to get nearby riders" });
   }
 });
+
 
 app.get("/user", async (req, res) => {
   const { email } = req.query;
