@@ -18,6 +18,11 @@ const FinderSchema = new mongoose.Schema({
     seatsAvailable: { type: Number, default: 1 },
     carNumber: { type: String, default: "" },
     password: { type: String, default: "" },
+
+        pickupLat: { type: Number, default: null },
+    pickupLng: { type: Number, default: null },
+    dropLat: { type: Number, default: null },
+    dropLng: { type: Number, default: null },
 });
 
 module.exports = mongoose.model("Finder", FinderSchema);
