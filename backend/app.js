@@ -288,8 +288,8 @@ app.post("/nearby-riders", async (req, res) => {
       const pickupCoords = await geocode(finder.pickup);
       const dropCoords = await geocode(finder.drop);
 
-      if (!pickupCoords) console.warn(`⚠️ Geocoding failed for pickup: "${finder.pickup}"`);
-      if (!dropCoords) console.warn(`⚠️ Geocoding failed for drop: "${finder.drop}"`);
+      if (!pickupCoords) console.log(`⚠️ Geocoding failed for pickup: "${finder.pickup}"`);
+      if (!dropCoords) console.log(`⚠️ Geocoding failed for drop: "${finder.drop}"`);
 
       // Only calculate distances if both coordinates exist
       if (pickupCoords && dropCoords) {
@@ -344,7 +344,7 @@ app.post("/nearby-riders", async (req, res) => {
 
     res.json(nearbyRiders);
   } catch (err) {
-    console.error("❌ Error in /nearby-riders:", err);
+    console.log("❌ Error in /nearby-riders:", err);
     res.status(500).json({ message: "Failed to get nearby riders" });
   }
 });
