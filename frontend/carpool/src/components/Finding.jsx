@@ -87,7 +87,7 @@ useEffect(() => {
         riders.forEach((rider) => {
           L.marker([rider.pickupLat, rider.pickupLng], {
             icon: L.icon({
-              iconUrl: "/rider1.png",
+              iconUrl:  "/rider1.png",
               iconSize: [90, 90],
               iconAnchor: [30, 90],
             }),
