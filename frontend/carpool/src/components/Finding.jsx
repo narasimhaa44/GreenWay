@@ -154,11 +154,6 @@ useEffect(() => {
 
       // Add rider markers
       riders.forEach((rider) => {
-        if (rider.pickupLat && rider.pickupLng) {
-          const imageUrl = rider.picture
-            ? `https://greenwayb.onrender.com/uploads/${rider.picture}`
-            : "/pic.jpg";
-
           L.marker([rider.pickupLat, rider.pickupLng], {
             icon: L.icon({
               iconUrl: "/rider1.png",
