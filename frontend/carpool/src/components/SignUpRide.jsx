@@ -13,7 +13,7 @@ const SignUpRide = () => {
   const handleSignup = async (e) => {
     e.preventDefault();
     try {
-      const res = await axios.post("http://localhost:5000/finderSignup", {
+      const res = await axios.post("https://greenwayb.onrender.com/finderSignup", {
         userName,
         email,
         password,
