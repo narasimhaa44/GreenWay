@@ -16,11 +16,33 @@ const app = express();
 app.use(express.json());
 FRONTEND_URL="https://greenwayf.onrender.com";
 // ================= MongoDB Connection =================
+// mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
+//   .then(() => console.log("✅ MongoDB connected"))
+//   .catch(err => console.error("❌ MongoDB error:", err));
+// console.log('Mongo URI:', process.env.MONGO_URI);
 mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
-  .then(() => console.log("✅ MongoDB connected"))
-  .catch(err => console.error("❌ MongoDB error:", err));
-console.log('Mongo URI:', process.env.MONGO_URI);
+  .then(async () => {
+    const finders = await Finder.find({});
 
+    for (let finder of finders) {
+      if (!finder.pickupLat || !finder.dropLat) {
+        const pickupCoords = await geocode(finder.pickup);
+        const dropCoords = await geocode(finder.drop);
+
+        finder.pickupLat = pickupCoords ? pickupCoords[0] : null;
+        finder.pickupLng = pickupCoords ? pickupCoords[1] : null;
+        finder.dropLat = dropCoords ? dropCoords[0] : null;
+        finder.dropLng = dropCoords ? dropCoords[1] : null;
+
+        await finder.save();
+        console.log(`Updated: ${finder.email}`);
+      }
+    }
+
+    console.log("✅ All done!");
+    mongoose.disconnect();
+  })
+  .catch(err => console.error("❌ MongoDB connection error:", err));
 // ================= CORS =================
 app.use(cors({
   origin: process.env.FRONTEND_URL, 
@@ -160,20 +182,58 @@ app.post("/update", async (req, res) => {
   }
 });
 
+// app.post("/update1", async (req, res) => {
+//   const { email, pickup, drop, journeyDate, carModel, seatsAvailable, carNumber, Cost } = req.body;
+//   try {
+//     const finder = await Finder.findOneAndUpdate(
+//       { email },
+//       { $set: { pickup, drop, journeyDate, carModel, seatsAvailable, carNumber, lastLogin: Date.now(), price: Cost } },
+//       { new: true }
+//     );
+//     if (!finder) return res.status(404).json({ error: "User not found" });
+//     res.json(finder);
+//   } catch (err) {
+//     res.status(500).json({ error: "Failed to update user" });
+//   }
+// });
+
 app.post("/update1", async (req, res) => {
   const { email, pickup, drop, journeyDate, carModel, seatsAvailable, carNumber, Cost } = req.body;
+
   try {
+    const pickupCoords = await geocode(pickup);
+    const dropCoords = await geocode(drop);
+
+    const updateData = {
+      pickup,
+      drop,
+      journeyDate,
+      carModel,
+      seatsAvailable,
+      carNumber,
+      price: Cost,
+      lastLogin: Date.now(),
+      pickupLat: pickupCoords ? pickupCoords[0] : null,
+      pickupLng: pickupCoords ? pickupCoords[1] : null,
+      dropLat: dropCoords ? dropCoords[0] : null,
+      dropLng: dropCoords ? dropCoords[1] : null,
+    };
+
     const finder = await Finder.findOneAndUpdate(
       { email },
-      { $set: { pickup, drop, journeyDate, carModel, seatsAvailable, carNumber, lastLogin: Date.now(), price: Cost } },
+      { $set: updateData },
       { new: true }
     );
-    if (!finder) return res.status(404).json({ error: "User not found" });
+
+    if (!finder) return res.status(404).json({ error: "Finder not found" });
+
     res.json(finder);
   } catch (err) {
-    res.status(500).json({ error: "Failed to update user" });
+    console.error(err);
+    res.status(500).json({ error: "Failed to update finder" });
   }
 });
+
 
 app.get("/logout", (req, res, next) => {
   req.logout(err => {
