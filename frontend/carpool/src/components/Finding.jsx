@@ -72,7 +72,7 @@ useEffect(() => {
           {
             userLocation: { lat: pickupCoords[0], lng: pickupCoords[1] },
             userDropLocation: { lat: dropCoords[0], lng: dropCoords[1] },
-            radius: 3,
+            radius: 30,
           },
           {
             headers: { "Content-Type": "application/json" }
