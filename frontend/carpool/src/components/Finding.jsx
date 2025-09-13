@@ -68,120 +68,126 @@ const Finding = () => {
     fetchCoords();
   }, [pickup, drop]);
 
-  // Load nearby riders
-  useEffect(() => {
-    const loadNearbyRiders = async () => {
-      if (pickupCoords && dropCoords) {
-        try {
-          const res = await axios.post(
-            "https://greenwayb.onrender.com/nearby-riders",
-            {
-              userLocation: { lat: pickupCoords[0], lng: pickupCoords[1] },
-              userDropLocation: { lat: dropCoords[0], lng: dropCoords[1] },
-              radius: 3,
-            },
-            {
-              headers: { "Content-Type": "application/json" },
-            }
-          );
+useEffect(() => {
+  const initializeMapAndLoadData = async () => {
+    if (pickupCoords && dropCoords && mapContainerRef.current) {
+      // Initialize map if not already initialized
+      if (!mapRef.current) {
+        mapRef.current = L.map(mapContainerRef.current).setView(pickupCoords, 10);
 
-          const riders = res.data;
-          console.log("Fetched riders:", riders);
-          setNearbyRiders(riders);
+        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+          attribution: "GreenWay",
+        }).addTo(mapRef.current);
 
-          // Add markers safely
-          riders
-            .forEach((rider) => {
-              const marker = L.marker([rider.pickupLat, rider.pickupLng], {
-                icon: L.icon({
-                  iconUrl: "/rider1.png",
-                  iconSize: [90, 90],
-                  iconAnchor: [30, 90],
-                }),
-              });
-              marker.addTo(mapRef.current).bindPopup(rider.name);
-            });
-        } catch (err) {
-          console.error("Error fetching nearby riders:", err);
+        L.marker(pickupCoords, {
+          icon: L.icon({
+            iconUrl: "/finder.png",
+            iconSize: [60, 60],
+            iconAnchor: [30, 60],
+          }),
+        }).addTo(mapRef.current).bindPopup("Pickup Point");
+
+        L.circle(pickupCoords, {
+          radius: 1000,
+          color: "#c96363ff",
+          weight: 3,
+          fillColor: "#f70000ff",
+          fillOpacity: 0.15,
+          dashArray: "10,10",
+        }).addTo(mapRef.current);
+
+        L.marker(dropCoords, {
+          icon: L.icon({
+            iconUrl: "/dest.png",
+            iconSize: [30, 40],
+            iconAnchor: [30, 40],
+          }),
+        }).addTo(mapRef.current).bindPopup("Destination");
+
+        const midLat = (pickupCoords[0] + dropCoords[0]) / 2;
+        const midLng = (pickupCoords[1] + dropCoords[1]) / 2;
+        const offsetLat = (dropCoords[0] - pickupCoords[0]) * 0.3;
+        const offsetLng = (dropCoords[1] - pickupCoords[1]) * 0.3;
+        const curvePoint = [midLat + offsetLng, midLng - offsetLat];
+
+        const curvePoints = [];
+        for (let t = 0; t <= 1; t += 0.05) {
+          const lat =
+            (1 - t) * (1 - t) * pickupCoords[0] +
+            2 * (1 - t) * t * curvePoint[0] +
+            t * t * dropCoords[0];
+          const lng =
+            (1 - t) * (1 - t) * pickupCoords[1] +
+            2 * (1 - t) * t * curvePoint[1] +
+            t * t * dropCoords[1];
+          curvePoints.push([lat, lng]);
         }
-      }
-    };
-    loadNearbyRiders();
-  }, [pickupCoords, dropCoords]);
 
-  // Initialize map and draw route
-  useEffect(() => {
-    if (pickupCoords && dropCoords && mapContainerRef.current && !mapRef.current) {
-      mapRef.current = L.map(mapContainerRef.current).setView(pickupCoords, 10);
+        L.polyline(curvePoints, {
+          color: "#444141ff",
+          weight: 2,
+          opacity: 1.0,
+          smoothFactor: 1,
+          className: styles.animatedLine,
+        }).addTo(mapRef.current);
 
-      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
-        attribution: "GreenWay",
-      }).addTo(mapRef.current);
-
-      L.marker(pickupCoords, {
-        icon: L.icon({
-          iconUrl: "/finder.png",
-          iconSize: [60, 60],
-          iconAnchor: [30, 60],
-        }),
-      }).addTo(mapRef.current).bindPopup("Pickup Point");
-
-      L.circle(pickupCoords, {
-        radius: 1000,
-        color: "#c96363ff",
-        weight: 3,
-        fillColor: "#f70000ff",
-        fillOpacity: 0.15,
-        dashArray: "10,10",
-      }).addTo(mapRef.current);
-
-      L.marker(dropCoords, {
-        icon: L.icon({
-          iconUrl: "/dest.png",
-          iconSize: [30, 40],
-          iconAnchor: [30, 40],
-        }),
-      }).addTo(mapRef.current).bindPopup("Destination");
-
-      // Draw curved polyline
-      const midLat = (pickupCoords[0] + dropCoords[0]) / 2;
-      const midLng = (pickupCoords[1] + dropCoords[1]) / 2;
-      const offsetLat = (dropCoords[0] - pickupCoords[0]) * 0.3;
-      const offsetLng = (dropCoords[1] - pickupCoords[1]) * 0.3;
-      const curvePoint = [midLat + offsetLng, midLng - offsetLat];
-
-      const curvePoints = [];
-      for (let t = 0; t <= 1; t += 0.05) {
-        const lat =
-          (1 - t) * (1 - t) * pickupCoords[0] +
-          2 * (1 - t) * t * curvePoint[0] +
-          t * t * dropCoords[0];
-        const lng =
-          (1 - t) * (1 - t) * pickupCoords[1] +
-          2 * (1 - t) * t * curvePoint[1] +
-          t * t * dropCoords[1];
-        curvePoints.push([lat, lng]);
+        const bounds = L.latLngBounds([pickupCoords, dropCoords]);
+        mapRef.current.fitBounds(bounds, { padding: [50, 50] });
       }
 
-      L.polyline(curvePoints, {
-        color: "#444141ff",
-        weight: 2,
-        opacity: 1.0,
-        smoothFactor: 1,
-        className: styles.animatedLine,
-      }).addTo(mapRef.current);
+      // Now fetch riders and add markers
+      const res = await axios.post(
+        "https://greenwayb.onrender.com/nearby-riders",
+        {
+          userLocation: { lat: pickupCoords[0], lng: pickupCoords[1] },
+          userDropLocation: { lat: dropCoords[0], lng: dropCoords[1] },
+          radius: 3,
+        },
+        {
+          headers: { "Content-Type": "application/json" },
+        }
+      );
 
-      const bounds = L.latLngBounds([pickupCoords, dropCoords]);
-      mapRef.current.fitBounds(bounds, { padding: [50, 50] });
+      const riders = res.data;
+      console.log("Fetched riders:", riders);
+      setNearbyRiders(riders);
+
+      // Add rider markers
+      riders.forEach((rider) => {
+        if (rider.pickupLat && rider.pickupLng) {
+          const imageUrl = rider.picture
+            ? `https://greenwayb.onrender.com/uploads/${rider.picture}`
+            : "/pic.jpg";
+
+          L.marker([rider.pickupLat, rider.pickupLng], {
+            icon: L.icon({
+              iconUrl: "/rider1.png",
+              iconSize: [90, 90],
+              iconAnchor: [30, 90],
+            }),
+          })
+            .addTo(mapRef.current)
+            .bindPopup(`
+              <div style="text-align:center;">
+                <img src="${imageUrl}" alt="${rider.name}" style="width:100px;height:100px;border-radius:50%;" />
+                <h4>${rider.name}</h4>
+              </div>
+            `);
+        }
+      });
     }
+  };
 
-    return () => {
-      if (mapRef.current) {
-        mapRef.current.remove();
-        mapRef.current = null;
-      }
-    };
-  }, [pickupCoords, dropCoords]);
+  initializeMapAndLoadData();
+
+  return () => {
+    if (mapRef.current) {
+      mapRef.current.remove();
+      mapRef.current = null;
+    }
+  };
+}, [pickupCoords, dropCoords]);
+
 
   return (
     <div className={styles.main}>
