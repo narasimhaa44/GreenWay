@@ -1,42 +1,46 @@
 import styles from "./Finding.module.css";
 import { useEffect, useState, useRef } from "react";
-import { useLocation,useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { MdCurrencyRupee } from "react-icons/md";
 import axios from "axios";
+
 const Finding = () => {
   const [locationData, setLocationData] = useState(null);
   const [dropCoords, setDropCoords] = useState(null);
   const [pickupCoords, setPickupCoords] = useState(null);
   const [nearbyRiders, setNearbyRiders] = useState([]);
-  const navigate=useNavigate();
+
+  const navigate = useNavigate();
   const mapRef = useRef(null);
   const mapContainerRef = useRef(null);
 
   const location = useLocation();
-  const { pickup, drop, journeyDate,email } = location.state || {};
+  const { pickup, drop, journeyDate, email } = location.state || {};
 
-  const handleBooking=async(rider)=>{
-    try{
-      const res=await axios.post("https://greenwayb.onrender.com/booking",{
-        userEmail:email,
-        riderEmail:rider.email,
+  const handleBooking = async (rider) => {
+    try {
+      const res = await axios.post("https://greenwayb.onrender.com/booking", {
+        userEmail: email,
+        riderEmail: rider.email,
         pickup,
         drop,
         journeyDate,
       });
       console.log(res.data);
-          // alert("Booking confirmed! An email has been sent.");
-          navigate("/SucessU");
-    }catch(error){
-      console.err("Booking failed",error);
+      navigate("/SucessU");
+    } catch (error) {
+      console.error("Booking failed", error);
     }
-  }
+  };
+
   const geocode = async (place) => {
     try {
       const res = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(place)}`
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
+          place
+        )}`
       );
       const data = await res.json();
       if (data.length > 0) {
@@ -49,6 +53,7 @@ const Finding = () => {
     }
   };
 
+  // Fetch pickup and drop coordinates
   useEffect(() => {
     const fetchCoords = async () => {
       if (pickup) {
@@ -63,50 +68,50 @@ const Finding = () => {
     fetchCoords();
   }, [pickup, drop]);
 
-useEffect(() => {
-  const loadNearbyRiders = async () => {
-    if (pickupCoords && dropCoords) {
-      try {
-        const res = await axios.post(
-          "https://greenwayb.onrender.com/nearby-riders",
-          {
-            userLocation: { lat: pickupCoords[0], lng: pickupCoords[1] },
-            userDropLocation: { lat: dropCoords[0], lng: dropCoords[1] },
-            radius: 3,
-          },
-          {
-            headers: { "Content-Type": "application/json" }
-          }
-        );
+  // Load nearby riders
+  useEffect(() => {
+    const loadNearbyRiders = async () => {
+      if (pickupCoords && dropCoords) {
+        try {
+          const res = await axios.post(
+            "https://greenwayb.onrender.com/nearby-riders",
+            {
+              userLocation: { lat: pickupCoords[0], lng: pickupCoords[1] },
+              userDropLocation: { lat: dropCoords[0], lng: dropCoords[1] },
+              radius: 3,
+            },
+            {
+              headers: { "Content-Type": "application/json" },
+            }
+          );
 
-        const riders = res.data;
-        console.log("Fetched riders:", riders);
-        setNearbyRiders(riders);
+          const riders = res.data;
+          console.log("Fetched riders:", riders);
+          setNearbyRiders(riders);
 
-        // Add markers after fetching riders
-  riders
-    .filter(r => r.pickupLat && r.pickupLng) // only riders with valid coordinates
-    .forEach((rider) => {
-      L.marker([rider.pickupLat, rider.pickupLng], {
-        icon: L.icon({
-          iconUrl: "/rider1.png",
-          iconSize: [90, 90],
-          iconAnchor: [30, 90],
-      }),
-    }).addTo(mapRef.current).bindPopup(rider.name);
-  });
-
-
-      } catch (err) {
-        console.error("Error fetching nearby riders:", err);
+          // Add markers safely
+          riders
+            .filter((r) => r.pickupLat && r.pickupLng)
+            .forEach((rider) => {
+              const marker = L.marker([rider.pickupLat, rider.pickupLng], {
+                icon: L.icon({
+                  iconUrl: "/rider1.png",
+                  iconSize: [90, 90],
+                  iconAnchor: [30, 90],
+                }),
+              });
+              marker.addTo(mapRef.current).bindPopup(rider.name);
+            });
+        } catch (err) {
+          console.error("Error fetching nearby riders:", err);
+        }
       }
-    }
-  };
+    };
+    loadNearbyRiders();
+  }, [pickupCoords, dropCoords]);
 
-  loadNearbyRiders();
-}, [pickupCoords, dropCoords]);
-
-
+  // Initialize map and draw route
+  useEffect(() => {
     if (pickupCoords && dropCoords && mapContainerRef.current && !mapRef.current) {
       mapRef.current = L.map(mapContainerRef.current).setView(pickupCoords, 10);
 
@@ -139,6 +144,7 @@ useEffect(() => {
         }),
       }).addTo(mapRef.current).bindPopup("Destination");
 
+      // Draw curved polyline
       const midLat = (pickupCoords[0] + dropCoords[0]) / 2;
       const midLng = (pickupCoords[1] + dropCoords[1]) / 2;
       const offsetLat = (dropCoords[0] - pickupCoords[0]) * 0.3;
@@ -177,22 +183,6 @@ useEffect(() => {
       }
     };
   }, [pickupCoords, dropCoords]);
-
-  // const renderStars = (rating) => {
-  //   const stars = [];
-  //   const fullStars = Math.floor(rating);
-  //   const hasHalfStar = rating % 1 !== 0;
-
-  //   for (let i = 0; i < fullStars; i++) {
-  //     stars.push(<span key={i} className={styles.star}>★</span>);
-  //   }
-
-  //   if (hasHalfStar) {
-  //     stars.push(<span key="half" className={styles.halfStar}>☆</span>);
-  //   }
-
-  //   return stars;
-  // };
 
   return (
     <div className={styles.main}>
@@ -235,9 +225,7 @@ useEffect(() => {
       <div className={styles.right}>
         <div className={styles.driversHeader}>
           <h3 className={styles.driversTitle}>Available Drivers</h3>
-          <div className={styles.driversCount}>
-            {nearbyRiders.length} drivers nearby
-          </div>
+          <div className={styles.driversCount}>{nearbyRiders.length} drivers nearby</div>
         </div>
 
         <div className={styles.driversList}>
@@ -249,10 +237,8 @@ useEffect(() => {
                     src={rider.picture || "/pic.jpg"}
                     alt={rider.name}
                     className={styles.driverImage}
-                      referrerPolicy="no-referrer"
-
+                    referrerPolicy="no-referrer"
                   />
-                  {/* <p>{rider.picture}</p> */}
                   <div className={styles.onlineIndicator}></div>
                 </div>
                 <div className={styles.driverBasicInfo}>
@@ -260,7 +246,10 @@ useEffect(() => {
                   <div className={styles.driverRating}>★★★★★</div>
                 </div>
                 <div className={styles.driverPrice}>
-                  <span className={styles.priceAmount}><MdCurrencyRupee  className={styles.icon} />{rider.price}</span>
+                  <span className={styles.priceAmount}>
+                    <MdCurrencyRupee className={styles.icon} />
+                    {rider.price}
+                  </span>
                 </div>
               </div>
 
@@ -270,50 +259,42 @@ useEffect(() => {
                     <div className={styles.routeIcon}>🚀</div>
                     <div className={styles.routeText}>
                       <span className={styles.routeLabel}>From:</span>
-                      <span className={styles.routeValue}>
-                        {rider.pickup}
-                      </span>
+                      <span className={styles.routeValue}>{rider.pickup}</span>
                     </div>
                   </div>
                   <div className={styles.routeItem}>
                     <div className={styles.routeIcon}>🎯</div>
                     <div className={styles.routeText}>
                       <span className={styles.routeLabel}>To:</span>
-                      <span className={styles.routeValue}>
-                        {rider.drop}
-                      </span>
+                      <span className={styles.routeValue}>{rider.drop}</span>
                     </div>
                   </div>
                   <div className={styles.routeItem}>
                     <div className={styles.routeIcon}>🚗</div>
                     <div className={styles.routeText}>
                       <span className={styles.routeLabel}>Car Model:</span>
-                      <span className={styles.routeValue}>
-                        {rider.carModel}
-                      </span>
+                      <span className={styles.routeValue}>{rider.carModel}</span>
                     </div>
                   </div>
                   <div className={styles.routeItem}>
                     <div className={styles.routeIcon}>💺</div>
                     <div className={styles.routeText}>
                       <span className={styles.routeLabel}>Seats Available:</span>
-                      <span className={styles.routeValue}>
-                        {rider.seats}
-                      </span>
+                      <span className={styles.routeValue}>{rider.seats}</span>
                     </div>
                   </div>
                   <div className={styles.routeItem}>
                     <div className={styles.routeIcon}>🔢</div>
                     <div className={styles.routeText}>
                       <span className={styles.routeLabel}>Car Number:</span>
-                      <span className={styles.routeValue}>
-                        {rider.carnumber}
-                      </span>
+                      <span className={styles.routeValue}>{rider.carnumber}</span>
                     </div>
                   </div>
                 </div>
 
-                <button className={styles.bookButton} onClick={()=>handleBooking(rider)}>Book Ride</button>
+                <button className={styles.bookButton} onClick={() => handleBooking(rider)}>
+                  Book Ride
+                </button>
               </div>
             </div>
           ))}
@@ -324,3 +305,4 @@ useEffect(() => {
 };
 
 export default Finding;
+
