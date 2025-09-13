@@ -105,6 +105,33 @@ passport.use("google-user", new GoogleStrategy({
     }
   }
 ));
+// ================= Google OAuth Routes =================
+
+// Finder Google OAuth
+app.get("/auth/google/finder",
+  passport.authenticate("google-finder", { scope: ["profile", "email"], prompt: "select_account" })
+);
+
+app.get("/auth/google/finder/callback",
+  passport.authenticate("google-finder", { failureRedirect: "/" }),
+  (req, res) => {
+    // Redirect to frontend with user's email
+    res.redirect(`${FRONTEND_URL}/from?email=${encodeURIComponent(req.user.email)}`);
+  }
+);
+
+// User Google OAuth
+app.get("/auth/google/user",
+  passport.authenticate("google-user", { scope: ["profile", "email"], prompt: "select_account" })
+);
+
+app.get("/auth/google/user/callback",
+  passport.authenticate("google-user", { failureRedirect: "/" }),
+  (req, res) => {
+    // Redirect to frontend with user's email
+    res.redirect(`${FRONTEND_URL}/findR?email=${encodeURIComponent(req.user.email)}`);
+  }
+);
 
 // ================= Helper Functions =================
 const haversineDistance = (coord1, coord2) => {
