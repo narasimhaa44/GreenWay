@@ -159,18 +159,61 @@ app.post("/update", async (req, res) => {
   }
 });
 
+// app.post("/update1", async (req, res) => {
+//   const { email, pickup, drop, journeyDate, carModel, seatsAvailable, carNumber, Cost } = req.body;
+//   try {
+//     const finder = await Finder.findOneAndUpdate(
+//       { email },
+//       { $set: { pickup, drop, journeyDate, carModel, seatsAvailable, carNumber, lastLogin: Date.now(), price: Cost } },
+//       { new: true }
+//     );
+//     if (!finder) return res.status(404).json({ error: "User not found" });
+//     res.json(finder);
+//   } catch (err) {
+//     res.status(500).json({ error: "Failed to update user" });
+//   }
+// });
+
 app.post("/update1", async (req, res) => {
   const { email, pickup, drop, journeyDate, carModel, seatsAvailable, carNumber, Cost } = req.body;
+
   try {
+    const pickupCoords = await geocode(pickup);
+    const dropCoords = await geocode(drop);
+
+    const updateData = {
+      pickup,
+      drop,
+      journeyDate,
+      carModel,
+      seatsAvailable,
+      carNumber,
+      price: Cost,
+      lastLogin: Date.now(),
+    };
+
+    // Add coordinates if geocoding was successful
+    if (pickupCoords) {
+      updateData.pickupLat = pickupCoords[0];
+      updateData.pickupLng = pickupCoords[1];
+    }
+    if (dropCoords) {
+      updateData.dropLat = dropCoords[0];
+      updateData.dropLng = dropCoords[1];
+    }
+
     const finder = await Finder.findOneAndUpdate(
       { email },
-      { $set: { pickup, drop, journeyDate, carModel, seatsAvailable, carNumber, lastLogin: Date.now(), price: Cost } },
+      { $set: updateData },
       { new: true }
     );
-    if (!finder) return res.status(404).json({ error: "User not found" });
+
+    if (!finder) return res.status(404).json({ error: "Finder not found" });
+
     res.json(finder);
   } catch (err) {
-    res.status(500).json({ error: "Failed to update user" });
+    console.error("Error in /update1:", err);
+    res.status(500).json({ error: "Failed to update journey" });
   }
 });
 
@@ -279,74 +322,105 @@ const geocode = async (place) => {
   }
 };
 
+// app.post("/nearby-riders", async (req, res) => {
+//   const { userLocation, userDropLocation, radius } = req.body;
+//   try {
+//     const allFinders = await Finder.find({ pickup: { $exists: true, $ne: "" }, drop: { $exists: true, $ne: "" } });
+
+//     const nearbyRiders = [];
+
+//     for (let finder of allFinders) {
+//       const pickupCoords = await geocode(finder.pickup);
+//       const dropCoords = await geocode(finder.drop);
+
+//       if (!pickupCoords) console.log(`⚠️ Geocoding failed for pickup: "${finder.pickup}"`);
+//       if (!dropCoords) console.log(`⚠️ Geocoding failed for drop: "${finder.drop}"`);
+
+//       // Only calculate distances if both coordinates exist
+//       if (pickupCoords && dropCoords) {
+//         const pickupDistance = haversineDistance(
+//           { lat: userLocation.lat, lng: userLocation.lng },
+//           { lat: pickupCoords[0], lng: pickupCoords[1] }
+//         );
+//         const dropDistance = haversineDistance(
+//           { lat: userDropLocation.lat, lng: userDropLocation.lng },
+//           { lat: dropCoords[0], lng: dropCoords[1] }
+//         );
+
+//         if (pickupDistance <= radius && dropDistance <= radius) {
+//           nearbyRiders.push({
+//             id: finder._id,
+//             name: finder.name,
+//             picture: finder.picture,
+//             pickupLat: pickupCoords[0],
+//             pickupLng: pickupCoords[1],
+//             dropLat: dropCoords[0],
+//             dropLng: dropCoords[1],
+//             pickup: finder.pickup,
+//             drop: finder.drop,
+//             carModel: finder.carModel,
+//             seats: finder.seatsAvailable,
+//             carnumber: finder.carNumber,
+//             price: finder.price,
+//             email: finder.email,
+//           });
+//         }
+//       } else {
+//         // Optional: still return rider but mark as unlocatable
+//         nearbyRiders.push({
+//           id: finder._id,
+//           name: finder.name,
+//           picture: finder.picture,
+//           pickupLat: pickupCoords ? pickupCoords[0] : null,
+//           pickupLng: pickupCoords ? pickupCoords[1] : null,
+//           dropLat: dropCoords ? dropCoords[0] : null,
+//           dropLng: dropCoords ? dropCoords[1] : null,
+//           pickup: finder.pickup,
+//           drop: finder.drop,
+//           carModel: finder.carModel,
+//           seats: finder.seatsAvailable,
+//           carnumber: finder.carNumber,
+//           price: finder.price,
+//           email: finder.email,
+//           geocodeFailed: true,
+//         });
+//       }
+//     }
+
+//     res.json(nearbyRiders);
+//   } catch (err) {
+//     console.log("❌ Error in /nearby-riders:", err);
+//     res.status(500).json({ message: "Failed to get nearby riders" });
+//   }
+// });
+
 app.post("/nearby-riders", async (req, res) => {
   const { userLocation, userDropLocation, radius } = req.body;
+
   try {
-    const allFinders = await Finder.find({ pickup: { $exists: true, $ne: "" }, drop: { $exists: true, $ne: "" } });
+    const allFinders = await Finder.find({
+      pickupLat: { $ne: null },
+      pickupLng: { $ne: null },
+      dropLat: { $ne: null },
+      dropLng: { $ne: null },
+    });
 
-    const nearbyRiders = [];
+    const nearbyRiders = allFinders.filter((finder) => {
+      const pickupDistance = haversineDistance(
+        { lat: userLocation.lat, lng: userLocation.lng },
+        { lat: finder.pickupLat, lng: finder.pickupLng }
+      );
+      const dropDistance = haversineDistance(
+        { lat: userDropLocation.lat, lng: userDropLocation.lng },
+        { lat: finder.dropLat, lng: finder.dropLng }
+      );
 
-    for (let finder of allFinders) {
-      const pickupCoords = await geocode(finder.pickup);
-      const dropCoords = await geocode(finder.drop);
-
-      if (!pickupCoords) console.log(`⚠️ Geocoding failed for pickup: "${finder.pickup}"`);
-      if (!dropCoords) console.log(`⚠️ Geocoding failed for drop: "${finder.drop}"`);
-
-      // Only calculate distances if both coordinates exist
-      if (pickupCoords && dropCoords) {
-        const pickupDistance = haversineDistance(
-          { lat: userLocation.lat, lng: userLocation.lng },
-          { lat: pickupCoords[0], lng: pickupCoords[1] }
-        );
-        const dropDistance = haversineDistance(
-          { lat: userDropLocation.lat, lng: userDropLocation.lng },
-          { lat: dropCoords[0], lng: dropCoords[1] }
-        );
-
-        if (pickupDistance <= radius && dropDistance <= radius) {
-          nearbyRiders.push({
-            id: finder._id,
-            name: finder.name,
-            picture: finder.picture,
-            pickupLat: pickupCoords[0],
-            pickupLng: pickupCoords[1],
-            dropLat: dropCoords[0],
-            dropLng: dropCoords[1],
-            pickup: finder.pickup,
-            drop: finder.drop,
-            carModel: finder.carModel,
-            seats: finder.seatsAvailable,
-            carnumber: finder.carNumber,
-            price: finder.price,
-            email: finder.email,
-          });
-        }
-      } else {
-        // Optional: still return rider but mark as unlocatable
-        nearbyRiders.push({
-          id: finder._id,
-          name: finder.name,
-          picture: finder.picture,
-          pickupLat: pickupCoords ? pickupCoords[0] : null,
-          pickupLng: pickupCoords ? pickupCoords[1] : null,
-          dropLat: dropCoords ? dropCoords[0] : null,
-          dropLng: dropCoords ? dropCoords[1] : null,
-          pickup: finder.pickup,
-          drop: finder.drop,
-          carModel: finder.carModel,
-          seats: finder.seatsAvailable,
-          carnumber: finder.carNumber,
-          price: finder.price,
-          email: finder.email,
-          geocodeFailed: true,
-        });
-      }
-    }
+      return pickupDistance <= radius && dropDistance <= radius;
+    });
 
     res.json(nearbyRiders);
   } catch (err) {
-    console.log("❌ Error in /nearby-riders:", err);
+    console.error("Error in /nearby-riders:", err);
     res.status(500).json({ message: "Failed to get nearby riders" });
   }
 });
