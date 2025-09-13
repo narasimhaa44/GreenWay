@@ -70,10 +70,21 @@ const Finding = () => {
 
 useEffect(() => {
   const initializeMapAndLoadData = async () => {
-    if (pickupCoords && dropCoords && mapContainerRef.current) {
+      const res = await axios.post(
+        "https://greenwayb.onrender.com/nearby-riders",
+        {
+          userLocation: { lat: pickupCoords[0], lng: pickupCoords[1] },
+          userDropLocation: { lat: dropCoords[0], lng: dropCoords[1] },
+          radius: 2,
+        },
+        {
+          headers: { "Content-Type": "application/json" },
+        }
+  );
+    
+  if (pickupCoords && dropCoords && mapContainerRef.current) {
       // Initialize map if not already initialized
-      if (!mapRef.current) {
-        mapRef.current = L.map(mapContainerRef.current).setView(pickupCoords, 8);
+        mapRef.current = L.map(mapContainerRef.current).setView(pickupCoords, 7);
 
         L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
           attribution: "GreenWay",
@@ -130,27 +141,11 @@ useEffect(() => {
           smoothFactor: 1,
           className: styles.animatedLine,
         }).addTo(mapRef.current);
-        const bounds = L.latLngBounds([pickupCoords, dropCoords]);
-        mapRef.current.fitBounds(bounds, { padding: [50, 50] });
-      // Now fetch riders and add markers
-      const res = await axios.post(
-        "https://greenwayb.onrender.com/nearby-riders",
-        {
-          userLocation: { lat: pickupCoords[0], lng: pickupCoords[1] },
-          userDropLocation: { lat: dropCoords[0], lng: dropCoords[1] },
-          radius: 3,
-        },
-        {
-          headers: { "Content-Type": "application/json" },
-        }
-      );
-
-      const riders = res.data;
-      console.log("Fetched riders:", riders);
-      setNearbyRiders(riders);
 
       // Add rider markers
-      riders.forEach((rider) => {
+        initializeMapAndLoadData().then((riders)=>{
+          setNearbyRiders(riders);
+          riders.forEach((rider)=>{
           L.marker([rider.pickupLat, rider.pickupLng], {
             icon: L.icon({
               iconUrl: "/rider1.png",
@@ -159,11 +154,28 @@ useEffect(() => {
             }),
           }).addTo(mapRef.current).bindPopup(rider.name);
       });
+    });
+    
+        const bounds = L.latLngBounds([pickupCoords, dropCoords]);
+        mapRef.current.fitBounds(bounds, { padding: [50, 50] });
     }
-  }
-  };
-  initializeMapAndLoadData();
+  //     const riders = res.data;
+  //     console.log("Fetched riders:", riders);
 
+  //     // Add rider markers
+  //     riders.forEach((rider) => {
+  //         L.marker([rider.pickupLat, rider.pickupLng], {
+  //           icon: L.icon({
+  //             iconUrl: "/rider1.png",
+  //             iconSize: [90, 90], 
+  //             iconAnchor: [30, 90],
+  //           }),
+  //         }).addTo(mapRef.current).bindPopup(rider.name);
+  //     });
+  //   }
+  // };
+  // initializeMapAndLoadData();
+  }
   return () => {
     if (mapRef.current) {
       mapRef.current.remove();
