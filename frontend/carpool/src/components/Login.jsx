@@ -10,14 +10,14 @@ const Login = () => {
   const navigate = useNavigate();
 
   const handleGoogleLogin = () => {
-    window.location.href = "http://localhost:5000/auth/google/user";
+    window.location.href = "https://greenwayb.onrender.com/auth/google/user";
   };
 
   const handleEvent = async (e) => {
     e.preventDefault();
     setError(""); // reset error before sending request
     try {
-      const res = await axios.post("http://localhost:5000/userlogin", {
+      const res = await axios.post("https://greenwayb.onrender.com/userlogin", {
         email,
         password
       });
