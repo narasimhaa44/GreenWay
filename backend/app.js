@@ -270,6 +270,7 @@ const geocode = async (place) => {
   try {
     const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(place)}`);
     const data = await res.json();
+    console.log(data);
     if (data.length > 0) return [parseFloat(data[0].lat), parseFloat(data[0].lon)];
     return null;
   } catch (err) {
