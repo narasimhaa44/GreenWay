@@ -10,13 +10,13 @@ const FindUser = () => {
   const navigate = useNavigate();
 
   const handleGoogleLogin = () => {
-    window.location.href = "http://localhost:5000/auth/google/finder";
+    window.location.href = "https://greenwayb.onrender.com/auth/google/finder";
   };
 
   const handleEvent = async (e) => {
     e.preventDefault();
     try {
-      const res = await axios.post("http://localhost:5000/finderlogin", {
+      const res = await axios.post("https://greenwayb.onrender.com/finderlogin", {
         email,
         password
       });
