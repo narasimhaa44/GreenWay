@@ -168,7 +168,6 @@ useEffect(() => {
                 <h4>${rider.name}</h4>
               </div>
             `);
-        }
       });
     }
   };
