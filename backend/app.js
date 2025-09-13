@@ -173,6 +173,23 @@ app.post("/update", async (req, res) => {
 //     res.status(500).json({ error: "Failed to update user" });
 //   }
 // });
+  const geocode = async (place) => {
+    try {
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
+          place
+        )}`
+      );
+      const data = await res.json();
+      if (data.length > 0) {
+        return [parseFloat(data[0].lat), parseFloat(data[0].lon)];
+      }
+      return null;
+    } catch (err) {
+      console.error("Geocoding error:", err);
+      return null;
+    }
+  };
 
 app.post("/update1", async (req, res) => {
   const { email, pickup, drop, journeyDate, carModel, seatsAvailable, carNumber, Cost } = req.body;
@@ -308,20 +325,6 @@ const haversineDistance = (coord1, coord2) => {
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   return R * c;
 };
-
-const geocode = async (place) => {
-  try {
-    const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(place)}`);
-    const data = await res.json();
-    console.log(data);
-    if (data.length > 0) return [parseFloat(data[0].lat), parseFloat(data[0].lon)];
-    return null;
-  } catch (err) {
-        console.log('Geocode error:', err);
-    return null;
-  }
-};
-
 // app.post("/nearby-riders", async (req, res) => {
 //   const { userLocation, userDropLocation, radius } = req.body;
 //   try {
