@@ -70,20 +70,22 @@ const Finding = () => {
 
 useEffect(() => {
   const initializeMapAndLoadData = async () => {
-      const res = await axios.post(
-        "https://greenwayb.onrender.com/nearby-riders",
-        {
-          userLocation: { lat: pickupCoords[0], lng: pickupCoords[1] },
-          userDropLocation: { lat: dropCoords[0], lng: dropCoords[1] },
-          radius: 2,
-        },
-        {
-          headers: { "Content-Type": "application/json" },
-        }
-  );
-    
-  if (pickupCoords && dropCoords && mapContainerRef.current) {
-      // Initialize map if not already initialized
+    if (pickupCoords && dropCoords && mapContainerRef.current) {
+      try {
+        const res = await axios.post(
+          "https://greenwayb.onrender.com/nearby-riders",
+          {
+            userLocation: { lat: pickupCoords[0], lng: pickupCoords[1] },
+            userDropLocation: { lat: dropCoords[0], lng: dropCoords[1] },
+            radius: 2,
+          },
+          { headers: { "Content-Type": "application/json" } }
+        );
+
+        const riders = res.data;
+        console.log("Fetched nearby riders:", riders);
+        setNearbyRiders(riders);
+
         mapRef.current = L.map(mapContainerRef.current).setView(pickupCoords, 7);
 
         L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
@@ -142,40 +144,36 @@ useEffect(() => {
           className: styles.animatedLine,
         }).addTo(mapRef.current);
 
-      // Add rider markers
-        initializeMapAndLoadData().then((riders)=>{
-          setNearbyRiders(riders);
-          riders.forEach((rider)=>{
-          L.marker([rider.pickupLat, rider.pickupLng], {
-            icon: L.icon({
-              iconUrl: "/rider1.png",
-              iconSize: [90, 90],
-              iconAnchor: [30, 90],
-            }),
-          }).addTo(mapRef.current).bindPopup(rider.name);
-      });
-    });
-    
+        // Add rider markers
+        riders.forEach((rider) => {
+          const lat = parseFloat(rider.pickupLat);
+          const lng = parseFloat(rider.pickupLng);
+
+          if (!isNaN(lat) && !isNaN(lng)) {
+            console.log(`Adding marker for rider: ${rider.name}`);
+
+            L.marker([lat, lng], {
+              icon: L.icon({
+                iconUrl: "/rider1.png",
+                iconSize: [90, 90],
+                iconAnchor: [30, 90],
+              }),
+            }).addTo(mapRef.current).bindPopup(rider.name);
+          } else {
+            console.warn(`Invalid coordinates for rider: ${rider.name}`);
+          }
+        });
+
         const bounds = L.latLngBounds([pickupCoords, dropCoords]);
         mapRef.current.fitBounds(bounds, { padding: [50, 50] });
+      } catch (err) {
+        console.error("Error initializing map or fetching riders:", err);
+      }
     }
-  //     const riders = res.data;
-  //     console.log("Fetched riders:", riders);
+  };
 
-  //     // Add rider markers
-  //     riders.forEach((rider) => {
-  //         L.marker([rider.pickupLat, rider.pickupLng], {
-  //           icon: L.icon({
-  //             iconUrl: "/rider1.png",
-  //             iconSize: [90, 90], 
-  //             iconAnchor: [30, 90],
-  //           }),
-  //         }).addTo(mapRef.current).bindPopup(rider.name);
-  //     });
-  //   }
-  // };
-  // initializeMapAndLoadData();
-  }
+  initializeMapAndLoadData();
+
   return () => {
     if (mapRef.current) {
       mapRef.current.remove();
@@ -183,7 +181,6 @@ useEffect(() => {
     }
   };
 }, [pickupCoords, dropCoords]);
-
 
   return (
     <div className={styles.main}>
