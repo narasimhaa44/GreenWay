@@ -63,19 +63,39 @@ const Finding = () => {
     fetchCoords();
   }, [pickup, drop]);
 
-  useEffect(() => {
-    const fetchNearbyRiders = async (pickupCoords) => {
-      const res = await fetch("https://greenwayb.onrender.com/nearby-riders", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          userLocation: { lat: pickupCoords[0], lng: pickupCoords[1] },
-          userDropLocation: { lat: dropCoords[0], lng: dropCoords[1] },
-          radius: 2,
-        }),
-      });
-      return res.json();
-    };
+useEffect(() => {
+  const loadNearbyRiders = async () => {
+    if (pickupCoords && dropCoords) {
+      try {
+        const res = await fetch("https://greenwayb.onrender.com/nearby-riders", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            userLocation: { lat: pickupCoords[0], lng: pickupCoords[1] },
+            userDropLocation: { lat: dropCoords[0], lng: dropCoords[1] },
+            radius: 3,
+          }),
+        });
+        const riders = await res.json();
+        console.log("Fetched riders:", riders);
+        setNearbyRiders(riders);
+
+        // Add markers after fetching riders
+        riders.forEach((rider) => {
+          L.marker([rider.pickupLat, rider.pickupLng], {
+            icon: L.icon({
+              iconUrl: "/rider1.png",
+              iconSize: [90, 90],
+              iconAnchor: [30, 90],
+            }),
+          }).addTo(mapRef.current).bindPopup(rider.name);
+        });
+
+      } catch (err) {
+        console.error("Error fetching nearby riders:", err);
+      }
+    }
+  };
 
     if (pickupCoords && dropCoords && mapContainerRef.current && !mapRef.current) {
       mapRef.current = L.map(mapContainerRef.current).setView(pickupCoords, 10);
@@ -93,7 +113,7 @@ const Finding = () => {
       }).addTo(mapRef.current).bindPopup("Pickup Point");
 
       L.circle(pickupCoords, {
-        radius: 800,
+        radius: 1000,
         color: "#c96363ff",
         weight: 3,
         fillColor: "#f70000ff",
@@ -135,19 +155,6 @@ const Finding = () => {
         smoothFactor: 1,
         className: styles.animatedLine,
       }).addTo(mapRef.current);
-
-      fetchNearbyRiders(pickupCoords).then((riders) => {
-        setNearbyRiders(riders);
-        riders.forEach((rider) => {
-          L.marker([rider.pickupLat, rider.pickupLng], {
-            icon: L.icon({
-              iconUrl: "/rider1.png",
-              iconSize: [90, 90],
-              iconAnchor: [30, 90],
-            }),
-          }).addTo(mapRef.current).bindPopup(rider.name);
-        });
-      });
 
       const bounds = L.latLngBounds([pickupCoords, dropCoords]);
       mapRef.current.fitBounds(bounds, { padding: [50, 50] });
