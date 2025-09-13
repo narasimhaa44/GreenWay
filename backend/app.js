@@ -274,6 +274,7 @@ const geocode = async (place) => {
     if (data.length > 0) return [parseFloat(data[0].lat), parseFloat(data[0].lon)];
     return null;
   } catch (err) {
+        console.error('Geocode error:', err);
     return null;
   }
 };
