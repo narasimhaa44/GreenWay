@@ -162,12 +162,7 @@ useEffect(() => {
             }),
           })
             .addTo(mapRef.current)
-            .bindPopup(`
-              <div style="text-align:center;">
-                <img src="${imageUrl}" alt="${rider.name}" style="width:100px;height:100px;border-radius:50%;" />
-                <h4>${rider.name}</h4>
-              </div>
-            `);
+            .bindPopup(rider.name);
       });
     }
   };
