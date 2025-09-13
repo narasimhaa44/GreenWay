@@ -277,86 +277,10 @@ const geocode = async (place) => {
   }
 };
 
-// app.post("/nearby-riders", async (req, res) => {
-//   const { userLocation, userDropLocation, radius } = req.body;
-//   try {
-//     const allFinders = await Finder.find({ pickup: { $exists: true, $ne: "" }, drop: { $exists: true, $ne: "" } });
-
-//     const nearbyRiders = [];
-
-//     for (let finder of allFinders) {
-//       const pickupCoords = await geocode(finder.pickup);
-//       const dropCoords = await geocode(finder.drop);
-
-//       if (!pickupCoords) console.log(`⚠️ Geocoding failed for pickup: "${finder.pickup}"`);
-//       if (!dropCoords) console.log(`⚠️ Geocoding failed for drop: "${finder.drop}"`);
-
-//       // Only calculate distances if both coordinates exist
-//       if (pickupCoords && dropCoords) {
-//         const pickupDistance = haversineDistance(
-//           { lat: userLocation.lat, lng: userLocation.lng },
-//           { lat: pickupCoords[0], lng: pickupCoords[1] }
-//         );
-//         const dropDistance = haversineDistance(
-//           { lat: userDropLocation.lat, lng: userDropLocation.lng },
-//           { lat: dropCoords[0], lng: dropCoords[1] }
-//         );
-
-//         if (pickupDistance <= radius && dropDistance <= radius) {
-//           nearbyRiders.push({
-//             id: finder._id,
-//             name: finder.name,
-//             picture: finder.picture,
-//             pickupLat: pickupCoords[0],
-//             pickupLng: pickupCoords[1],
-//             dropLat: dropCoords[0],
-//             dropLng: dropCoords[1],
-//             pickup: finder.pickup,
-//             drop: finder.drop,
-//             carModel: finder.carModel,
-//             seats: finder.seatsAvailable,
-//             carnumber: finder.carNumber,
-//             price: finder.price,
-//             email: finder.email,
-//           });
-//         }
-//       } else {
-//         // Optional: still return rider but mark as unlocatable
-//         nearbyRiders.push({
-//           id: finder._id,
-//           name: finder.name,
-//           picture: finder.picture,
-//           pickupLat: pickupCoords ? pickupCoords[0] : null,
-//           pickupLng: pickupCoords ? pickupCoords[1] : null,
-//           dropLat: dropCoords ? dropCoords[0] : null,
-//           dropLng: dropCoords ? dropCoords[1] : null,
-//           pickup: finder.pickup,
-//           drop: finder.drop,
-//           carModel: finder.carModel,
-//           seats: finder.seatsAvailable,
-//           carnumber: finder.carNumber,
-//           price: finder.price,
-//           email: finder.email,
-//           geocodeFailed: true,
-//         });
-//       }
-//     }
-
-//     res.json(nearbyRiders);
-//   } catch (err) {
-//     console.log("❌ Error in /nearby-riders:", err);
-//     res.status(500).json({ message: "Failed to get nearby riders" });
-//   }
-// });
-
 app.post("/nearby-riders", async (req, res) => {
   const { userLocation, userDropLocation, radius } = req.body;
-
   try {
-    const allFinders = await Finder.find({
-      pickup: { $exists: true, $ne: "" },
-      drop: { $exists: true, $ne: "" },
-    });
+    const allFinders = await Finder.find({ pickup: { $exists: true, $ne: "" }, drop: { $exists: true, $ne: "" } });
 
     const nearbyRiders = [];
 
@@ -364,30 +288,48 @@ app.post("/nearby-riders", async (req, res) => {
       const pickupCoords = await geocode(finder.pickup);
       const dropCoords = await geocode(finder.drop);
 
-      if (!pickupCoords || !dropCoords) {
-        console.log(`⚠️ Geocoding failed for finder: ${finder.name}`);
-        continue; // Skip this finder entirely
-      }
+      if (!pickupCoords) console.log(`⚠️ Geocoding failed for pickup: "${finder.pickup}"`);
+      if (!dropCoords) console.log(`⚠️ Geocoding failed for drop: "${finder.drop}"`);
 
-      const pickupDistance = haversineDistance(
-        { lat: userLocation.lat, lng: userLocation.lng },
-        { lat: pickupCoords[0], lng: pickupCoords[1] }
-      );
+      // Only calculate distances if both coordinates exist
+      if (pickupCoords && dropCoords) {
+        const pickupDistance = haversineDistance(
+          { lat: userLocation.lat, lng: userLocation.lng },
+          { lat: pickupCoords[0], lng: pickupCoords[1] }
+        );
+        const dropDistance = haversineDistance(
+          { lat: userDropLocation.lat, lng: userDropLocation.lng },
+          { lat: dropCoords[0], lng: dropCoords[1] }
+        );
 
-      const dropDistance = haversineDistance(
-        { lat: userDropLocation.lat, lng: userDropLocation.lng },
-        { lat: dropCoords[0], lng: dropCoords[1] }
-      );
-
-      if (pickupDistance <= radius && dropDistance <= radius) {
+        if (pickupDistance <= radius && dropDistance <= radius) {
+          nearbyRiders.push({
+            id: finder._id,
+            name: finder.name,
+            picture: finder.picture,
+            pickupLat: pickupCoords[0],
+            pickupLng: pickupCoords[1],
+            dropLat: dropCoords[0],
+            dropLng: dropCoords[1],
+            pickup: finder.pickup,
+            drop: finder.drop,
+            carModel: finder.carModel,
+            seats: finder.seatsAvailable,
+            carnumber: finder.carNumber,
+            price: finder.price,
+            email: finder.email,
+          });
+        }
+      } else {
+        // Optional: still return rider but mark as unlocatable
         nearbyRiders.push({
           id: finder._id,
           name: finder.name,
           picture: finder.picture,
-          pickupLat: pickupCoords[0],
-          pickupLng: pickupCoords[1],
-          dropLat: dropCoords[0],
-          dropLng: dropCoords[1],
+          pickupLat: pickupCoords ? pickupCoords[0] : null,
+          pickupLng: pickupCoords ? pickupCoords[1] : null,
+          dropLat: dropCoords ? dropCoords[0] : null,
+          dropLng: dropCoords ? dropCoords[1] : null,
           pickup: finder.pickup,
           drop: finder.drop,
           carModel: finder.carModel,
@@ -395,6 +337,7 @@ app.post("/nearby-riders", async (req, res) => {
           carnumber: finder.carNumber,
           price: finder.price,
           email: finder.email,
+          geocodeFailed: true,
         });
       }
     }
