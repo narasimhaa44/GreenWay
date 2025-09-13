@@ -84,15 +84,18 @@ useEffect(() => {
         setNearbyRiders(riders);
 
         // Add markers after fetching riders
-        riders.forEach((rider) => {
-          L.marker([rider.pickupLat, rider.pickupLng], {
-            icon: L.icon({
-              iconUrl:  "/rider1.png",
-              iconSize: [90, 90],
-              iconAnchor: [30, 90],
-            }),
-          }).addTo(mapRef.current).bindPopup(rider.name);
-        });
+  riders
+    .filter(r => r.pickupLat && r.pickupLng) // only riders with valid coordinates
+    .forEach((rider) => {
+      L.marker([rider.pickupLat, rider.pickupLng], {
+        icon: L.icon({
+          iconUrl: "/rider1.png",
+          iconSize: [90, 90],
+          iconAnchor: [30, 90],
+      }),
+    }).addTo(mapRef.current).bindPopup(rider.name);
+  });
+
 
       } catch (err) {
         console.error("Error fetching nearby riders:", err);
