@@ -13,7 +13,6 @@ const nodemailer = require("nodemailer");
 
 const app = express();
 app.use(express.json());
-BACKEND_URL="https://greenwayb.onrender.com";
 FRONTEND_URL="https://greenwayf.onrender.com";
 // ================= MongoDB Connection =================
 mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
