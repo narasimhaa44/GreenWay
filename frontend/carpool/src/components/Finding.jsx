@@ -90,18 +90,18 @@ const Finding = () => {
           setNearbyRiders(riders);
 
           // Add markers safely
-          riders
-            .filter((r) => r.pickupLat && r.pickupLng)
-            .forEach((rider) => {
-              const marker = L.marker([rider.pickupLat, rider.pickupLng], {
-                icon: L.icon({
-                  iconUrl: "/rider1.png",
-                  iconSize: [90, 90],
-                  iconAnchor: [30, 90],
-                }),
-              });
-              marker.addTo(mapRef.current).bindPopup(rider.name);
-            });
+          // riders
+          //   .filter((r) => r.pickupLat && r.pickupLng)
+          //   .forEach((rider) => {
+          //     const marker = L.marker([rider.pickupLat, rider.pickupLng], {
+          //       icon: L.icon({
+          //         iconUrl: "/rider1.png",
+          //         iconSize: [90, 90],
+          //         iconAnchor: [30, 90],
+          //       }),
+          //     });
+          //     marker.addTo(mapRef.current).bindPopup(rider.name);
+          //   });
         } catch (err) {
           console.error("Error fetching nearby riders:", err);
         }
