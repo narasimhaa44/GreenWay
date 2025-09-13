@@ -86,7 +86,7 @@ useEffect(() => {
         console.log("Fetched nearby riders:", riders);
         setNearbyRiders(riders);
 
-        mapRef.current = L.map(mapContainerRef.current).setView(pickupCoords, 7);
+        mapRef.current = L.map(mapContainerRef.current).setView(pickupCoords, 6.5);
 
         L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
           attribution: "GreenWay",
